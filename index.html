@@ -261,6 +261,15 @@
                 </div>
 
                 <button class="btn" onclick="addPayment()">Add Payment</button>
+                
+                <div style="margin-top: 15px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                    <button class="btn" onclick="exportToCSV()" style="background: linear-gradient(135deg, #28a745 0%, #20692b 100%);">Export CSV</button>
+                    <label class="btn" for="importFile" style="background: linear-gradient(135deg, #007bff 0%, #0056b3 100%); cursor: pointer; text-align: center;">
+                        Import CSV
+                        <input type="file" id="importFile" accept=".csv" style="display: none;" onchange="importFromCSV(event)">
+                    </label>
+                </div>
+                
                 <button class="btn btn-danger" onclick="clearAllData()">Clear All Data</button>
 
                 <div style="margin-top: 30px;">
@@ -386,8 +395,28 @@
             advanceInps: 1263.88  // Already paid for 2025
         };
 
-        // Load data from localStorage (will use in-memory storage for now)
-        let taxData = { payments: [] };
+        // Load data from localStorage (now enabled!)
+        function loadData() {
+            try {
+                const saved = localStorage.getItem('italianTaxData');
+                return saved ? JSON.parse(saved) : { payments: [] };
+            } catch (e) {
+                console.warn('Could not load saved data:', e);
+                return { payments: [] };
+            }
+        }
+
+        // Save data to localStorage
+        function saveData(data) {
+            try {
+                localStorage.setItem('italianTaxData', JSON.stringify(data));
+            } catch (e) {
+                console.warn('Could not save data:', e);
+            }
+        }
+
+        // Initialize with saved data
+        let taxData = loadData();
 
         // Format currency
         function formatCurrency(amount) {
@@ -451,6 +480,7 @@
                 amount: amount
             });
 
+            saveData(taxData);
             updateDisplay();
             
             // Clear form
@@ -461,6 +491,7 @@
         // Delete payment
         function deletePayment(id) {
             taxData.payments = taxData.payments.filter(p => p.id !== id);
+            saveData(taxData);
             updateDisplay();
         }
 
@@ -468,8 +499,83 @@
         function clearAllData() {
             if (confirm('Are you sure you want to clear all payment data?')) {
                 taxData = { payments: [] };
+                saveData(taxData);
                 updateDisplay();
             }
+        }
+
+        // Export to CSV
+        function exportToCSV() {
+            if (taxData.payments.length === 0) {
+                alert('No payments to export!');
+                return;
+            }
+
+            const headers = ['Date', 'Amount (EUR)'];
+            const csvContent = [
+                headers.join(','),
+                ...taxData.payments.map(p => `${p.date},${p.amount}`)
+            ].join('\n');
+
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            
+            if (link.download !== undefined) {
+                const url = URL.createObjectURL(blob);
+                link.setAttribute('href', url);
+                link.setAttribute('download', `italian-tax-data-${new Date().toISOString().split('T')[0]}.csv`);
+                link.style.visibility = 'hidden';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+        }
+
+        // Import from CSV
+        function importFromCSV(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const csv = e.target.result;
+                    const lines = csv.split('\n');
+                    const imported = [];
+
+                    for (let i = 1; i < lines.length; i++) { // Skip header
+                        const line = lines[i].trim();
+                        if (!line) continue;
+
+                        const [date, amount] = line.split(',');
+                        if (date && amount) {
+                            imported.push({
+                                id: Date.now() + i,
+                                date: date.trim(),
+                                amount: parseFloat(amount.trim())
+                            });
+                        }
+                    }
+
+                    if (imported.length > 0) {
+                        const confirmMsg = `Import ${imported.length} payments? This will add to existing data.`;
+                        if (confirm(confirmMsg)) {
+                            taxData.payments.push(...imported);
+                            saveData(taxData);
+                            updateDisplay();
+                            alert(`Successfully imported ${imported.length} payments!`);
+                        }
+                    } else {
+                        alert('No valid payments found in CSV file.');
+                    }
+                } catch (error) {
+                    alert('Error reading CSV file. Please check the format.');
+                }
+            };
+            reader.readAsText(file);
+            
+            // Reset file input
+            event.target.value = '';
         }
 
         // Update display
