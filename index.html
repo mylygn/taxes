@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Italian Tax Tracker - Regime Forfettario</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #009639 0%, #006837 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            padding: 30px;
+        }
+
+        .input-section {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 25px;
+        }
+
+        .summary-section {
+            background: #fff;
+            border-radius: 10px;
+            padding: 25px;
+            border: 2px solid #e9ecef;
+        }
+
+        .section-title {
+            font-size: 1.5em;
+            margin-bottom: 20px;
+            color: #333;
+            border-bottom: 2px solid #009639;
+            padding-bottom: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #555;
+        }
+
+        input[type="number"], input[type="date"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        input[type="number"]:focus, input[type="date"]:focus {
+            outline: none;
+            border-color: #009639;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #009639 0%, #006837 100%);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: transform 0.2s;
+            width: 100%;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #dc3545 0%, #b02a37 100%);
+            margin-top: 10px;
+        }
+
+        .summary-card {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-left: 5px solid #009639;
+        }
+
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            padding: 5px 0;
+        }
+
+        .summary-row:last-child {
+            margin-bottom: 0;
+            border-top: 2px solid #009639;
+            padding-top: 15px;
+            margin-top: 15px;
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+
+        .amount {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .amount.negative {
+            color: #dc3545;
+        }
+
+        .amount.positive {
+            color: #28a745;
+        }
+
+        .payments-list {
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            background: white;
+        }
+
+        .payment-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+            border-radius: 5px;
+            margin-bottom: 8px;
+            background: #f8f9fa;
+        }
+
+        .payment-item:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+        }
+
+        .payment-date {
+            font-size: 0.9em;
+            color: #666;
+        }
+
+        .delete-btn {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .alert {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .alert.warning {
+            background: #fff3cd;
+            border-color: #ffeaa7;
+            color: #856404;
+        }
+
+        .advance-payments {
+            background: #e7f3ff;
+            border: 2px solid #007bff;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .advance-title {
+            color: #007bff;
+            font-weight: bold;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+                gap: 20px;
+                padding: 20px;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🇮🇹 Italian Tax Tracker</h1>
+            <p>Regime Forfettario - Project Management Consulting</p>
+        </div>
+
+        <div class="main-content">
+            <div class="input-section">
+                <h2 class="section-title">Add Payment</h2>
+                
+                <div class="form-group">
+                    <label for="paymentDate">Payment Date:</label>
+                    <input type="date" id="paymentDate">
+                </div>
+
+                <div class="form-group">
+                    <label for="amount">Amount (EUR):</label>
+                    <input type="number" id="amount" step="0.01" placeholder="1250.00">
+                </div>
+
+                <button class="btn" onclick="addPayment()">Add Payment</button>
+                <button class="btn btn-danger" onclick="clearAllData()">Clear All Data</button>
+
+                <div style="margin-top: 30px;">
+                    <h3 class="section-title">Recent Payments</h3>
+                    <div class="payments-list" id="paymentsList">
+                        <p style="text-align: center; color: #666;">No payments added yet</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="summary-section">
+                <h2 class="section-title">Tax Summary 2025</h2>
+
+                <div class="advance-payments">
+                    <div class="advance-title">2025 Advance Payments Made</div>
+                    <div class="summary-row">
+                        <span>Income Tax Advance:</span>
+                        <span class="amount positive">€303.00</span>
+                    </div>
+                    <div class="summary-row">
+                        <span>INPS Advance:</span>
+                        <span class="amount positive">€1,263.88</span>
+                    </div>
+                </div>
+
+                <div class="summary-card">
+                    <div class="summary-row">
+                        <span>Total Gross Income:</span>
+                        <span class="amount" id="totalIncome">€0.00</span>
+                    </div>
+                    <div class="summary-row">
+                        <span>Taxable Income (78%):</span>
+                        <span class="amount" id="taxableIncome">€0.00</span>
+                    </div>
+                    <div class="summary-row">
+                        <span>Monthly Average:</span>
+                        <span class="amount" id="monthlyAverage">€0.00</span>
+                    </div>
+                </div>
+
+                <div class="summary-card">
+                    <div class="summary-row">
+                        <span>Income Tax Due (5%):</span>
+                        <span class="amount" id="incomeTaxDue">€0.00</span>
+                    </div>
+                    <div class="summary-row">
+                        <span>Less: Advance Paid:</span>
+                        <span class="amount positive">-€303.00</span>
+                    </div>
+                    <div class="summary-row">
+                        <span>Income Tax Balance:</span>
+                        <span class="amount" id="incomeTaxBalance">€0.00</span>
+                    </div>
+                </div>
+
+                <div class="summary-card">
+                    <div class="summary-row">
+                        <span>INPS Due (26.07%):</span>
+                        <span class="amount" id="inpsDue">€0.00</span>
+                    </div>
+                    <div class="summary-row">
+                        <span>Less: Advance Paid:</span>
+                        <span class="amount positive">-€1,263.88</span>
+                    </div>
+                    <div class="summary-row">
+                        <span>INPS Balance:</span>
+                        <span class="amount" id="inpsBalance">€0.00</span>
+                    </div>
+                </div>
+
+                <div class="summary-card">
+                    <div class="summary-row">
+                        <span><strong>Total Tax Balance Due:</strong></span>
+                        <span class="amount" id="totalTaxBalance"><strong>€0.00</strong></span>
+                    </div>
+                </div>
+
+                <div class="alert" id="projectionAlert" style="display: none;">
+                    <strong>Year-End Projection:</strong> <span id="projectionText"></span>
+                </div>
+
+                <div style="margin-top: 30px;">
+                    <h2 class="section-title">Pension Projection (20 Years)</h2>
+                    
+                    <div class="summary-card">
+                        <div class="summary-row">
+                            <span>Estimated Monthly Income:</span>
+                            <span class="amount" id="pensionMonthlyIncome">€0.00</span>
+                        </div>
+                        <div class="summary-row">
+                            <span>Total Contributions (20 years):</span>
+                            <span class="amount" id="pensionTotalContributions">€0.00</span>
+                        </div>
+                        <div class="summary-row">
+                            <span>Contribution Coefficient:</span>
+                            <span class="amount" id="pensionCoefficient">5.604%</span>
+                        </div>
+                        <div class="summary-row">
+                            <span><strong>Estimated Monthly Pension:</strong></span>
+                            <span class="amount" id="estimatedPension"><strong>€0.00</strong></span>
+                        </div>
+                    </div>
+
+                    <div class="alert">
+                        <strong>Note:</strong> This is an estimate based on current Gestione Separata rules. 
+                        Pension at age 67 with 20+ years of contributions. Calculation uses the contributory system 
+                        (sistema contributivo) with a transformation coefficient of 5.604% for retirement at age 67.
+                        <br><br>
+                        <strong>Requirements:</strong> Age 67 + 20 years minimum contributions + €1.5x social allowance threshold
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Tax rates and constants
+        const TAX_RATES = {
+            forfettarioTax: 0.05,  // 5% on taxable income
+            taxablePercentage: 0.78,  // 78% of gross is taxable
+            inpsRate: 0.2607,  // 26.07% INPS rate for Gestione Separata professionals
+            advanceIncomeTax: 303.00,  // Already paid for 2025
+            advanceInps: 1263.88  // Already paid for 2025
+        };
+
+        // Load data from localStorage (will use in-memory storage for now)
+        let taxData = { payments: [] };
+
+        // Format currency
+        function formatCurrency(amount) {
+            return new Intl.NumberFormat('it-IT', {
+                style: 'currency',
+                currency: 'EUR'
+            }).format(amount);
+        }
+
+        // Calculate pension projection
+        function calculatePensionProjection(monthlyAverage) {
+            const yearlyIncome = monthlyAverage * 12;
+            const yearlyINPSContributions = yearlyIncome * TAX_RATES.inpsRate;
+            const totalContributions20Years = yearlyINPSContributions * 20;
+            
+            // Gestione Separata pension calculation (sistema contributivo)
+            // Transformation coefficient for age 67 = 5.604% (2024 rates)
+            const transformationCoefficient = 0.05604;
+            const monthlyPension = (totalContributions20Years * transformationCoefficient) / 12;
+            
+            return {
+                monthlyIncome: yearlyIncome / 12,
+                totalContributions: totalContributions20Years,
+                monthlyPension: monthlyPension
+            };
+        }
+
+        // Calculate taxes
+        function calculateTaxes(grossIncome) {
+            const taxableIncome = grossIncome * TAX_RATES.taxablePercentage;
+            const incomeTaxDue = taxableIncome * TAX_RATES.forfettarioTax;
+            const inpsDue = grossIncome * TAX_RATES.inpsRate;
+            
+            const incomeTaxBalance = incomeTaxDue - TAX_RATES.advanceIncomeTax;
+            const inpsBalance = inpsDue - TAX_RATES.advanceInps;
+            const totalBalance = incomeTaxBalance + inpsBalance;
+
+            return {
+                taxableIncome,
+                incomeTaxDue,
+                inpsDue,
+                incomeTaxBalance,
+                inpsBalance,
+                totalBalance
+            };
+        }
+
+        // Add new payment
+        function addPayment() {
+            const date = document.getElementById('paymentDate').value;
+            const amount = parseFloat(document.getElementById('amount').value);
+
+            if (!date || !amount || amount <= 0) {
+                alert('Please enter a valid date and amount');
+                return;
+            }
+
+            taxData.payments.push({
+                id: Date.now(),
+                date: date,
+                amount: amount
+            });
+
+            updateDisplay();
+            
+            // Clear form
+            document.getElementById('paymentDate').value = '';
+            document.getElementById('amount').value = '';
+        }
+
+        // Delete payment
+        function deletePayment(id) {
+            taxData.payments = taxData.payments.filter(p => p.id !== id);
+            updateDisplay();
+        }
+
+        // Clear all data
+        function clearAllData() {
+            if (confirm('Are you sure you want to clear all payment data?')) {
+                taxData = { payments: [] };
+                updateDisplay();
+            }
+        }
+
+        // Update display
+        function updateDisplay() {
+            const payments = taxData.payments || [];
+
+            // Calculate totals
+            const totalGross = payments.reduce((sum, p) => sum + p.amount, 0);
+            const currentMonth = new Date().getMonth() + 1;
+            const monthlyAverage = currentMonth > 0 ? totalGross / currentMonth : 0;
+
+            const taxes = calculateTaxes(totalGross);
+
+            // Update summary
+            document.getElementById('totalIncome').textContent = formatCurrency(totalGross);
+            document.getElementById('taxableIncome').textContent = formatCurrency(taxes.taxableIncome);
+            document.getElementById('monthlyAverage').textContent = formatCurrency(monthlyAverage);
+            
+            document.getElementById('incomeTaxDue').textContent = formatCurrency(taxes.incomeTaxDue);
+            document.getElementById('incomeTaxBalance').textContent = formatCurrency(taxes.incomeTaxBalance);
+            
+            document.getElementById('inpsDue').textContent = formatCurrency(taxes.inpsDue);
+            document.getElementById('inpsBalance').textContent = formatCurrency(taxes.inpsBalance);
+            
+            const totalBalanceElement = document.getElementById('totalTaxBalance');
+            totalBalanceElement.textContent = formatCurrency(taxes.totalBalance);
+            
+            // Color coding for balance
+            totalBalanceElement.className = 'amount';
+            if (taxes.totalBalance > 0) {
+                totalBalanceElement.classList.add('negative');
+            } else if (taxes.totalBalance < 0) {
+                totalBalanceElement.classList.add('positive');
+            }
+
+            // Update balance colors
+            const incomeTaxBalanceEl = document.getElementById('incomeTaxBalance');
+            const inpsBalanceEl = document.getElementById('inpsBalance');
+            
+            incomeTaxBalanceEl.className = 'amount';
+            inpsBalanceEl.className = 'amount';
+            
+            if (taxes.incomeTaxBalance > 0) incomeTaxBalanceEl.classList.add('negative');
+            else if (taxes.incomeTaxBalance < 0) incomeTaxBalanceEl.classList.add('positive');
+            
+            if (taxes.inpsBalance > 0) inpsBalanceEl.classList.add('negative');
+            else if (taxes.inpsBalance < 0) inpsBalanceEl.classList.add('positive');
+
+            // Year-end projection
+            if (totalGross > 0) {
+                const projectedYearlyIncome = monthlyAverage * 12;
+                const projectedTaxes = calculateTaxes(projectedYearlyIncome);
+                
+                const projectionAlert = document.getElementById('projectionAlert');
+                const projectionText = document.getElementById('projectionText');
+                
+                projectionAlert.style.display = 'block';
+                projectionText.innerHTML = `
+                    Based on current average, your projected yearly income is <strong>${formatCurrency(projectedYearlyIncome)}</strong>. 
+                    Estimated total tax balance for year-end: <strong>${formatCurrency(projectedTaxes.totalBalance)}</strong>
+                `;
+                
+                if (projectedTaxes.totalBalance > 1000) {
+                    projectionAlert.className = 'alert warning';
+                } else {
+                    projectionAlert.className = 'alert';
+                }
+            } else {
+                document.getElementById('projectionAlert').style.display = 'none';
+            }
+
+            // Update pension projection
+            if (monthlyAverage > 0) {
+                const pensionProjection = calculatePensionProjection(monthlyAverage);
+                
+                document.getElementById('pensionMonthlyIncome').textContent = formatCurrency(pensionProjection.monthlyIncome);
+                document.getElementById('pensionTotalContributions').textContent = formatCurrency(pensionProjection.totalContributions);
+                document.getElementById('estimatedPension').textContent = formatCurrency(pensionProjection.monthlyPension);
+            } else {
+                document.getElementById('pensionMonthlyIncome').textContent = formatCurrency(0);
+                document.getElementById('pensionTotalContributions').textContent = formatCurrency(0);
+                document.getElementById('estimatedPension').textContent = formatCurrency(0);
+            }
+
+            // Update payments list
+            const paymentsList = document.getElementById('paymentsList');
+            if (payments.length === 0) {
+                paymentsList.innerHTML = '<p style="text-align: center; color: #666;">No payments added yet</p>';
+            } else {
+                const sortedPayments = payments.sort((a, b) => new Date(b.date) - new Date(a.date));
+                paymentsList.innerHTML = sortedPayments.map(payment => `
+                    <div class="payment-item">
+                        <div>
+                            <div class="amount">${formatCurrency(payment.amount)}</div>
+                            <div class="payment-date">${new Date(payment.date).toLocaleDateString('it-IT')}</div>
+                        </div>
+                        <button class="delete-btn" onclick="deletePayment(${payment.id})">Delete</button>
+                    </div>
+                `).join('');
+            }
+        }
+
+        // Set today's date as default and initialize display
+        document.getElementById('paymentDate').value = new Date().toISOString().split('T')[0];
+        updateDisplay();
+    </script>
+</body>
+</html>
